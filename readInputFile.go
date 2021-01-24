@@ -7,14 +7,14 @@ import (
 	"log"
 	url2 "net/url"
 	"os"
-	"strconv"
 	"strings"
+	"time"
 )
 
 // Represents the parameters for one of the monitored website
 type WebsiteParameter struct {
-	domain   string // Website to check, has to be a valid url
-	interval int    // Time between checks, in milliseconds
+	url      string        // Website to check, has to be a valid url
+	interval time.Duration // Time between checks
 }
 
 // Get the parameters for website monitoring, put them into an array of structs
@@ -22,7 +22,8 @@ type WebsiteParameter struct {
 // The file format should be as follows :
 // url1 interval1
 // url2 interval2
-// where interval{1,2} are integers in ms, and url{1,2} are valid urls
+// where interval{1,2} are duration (see https://golang.org/pkg/time/#ParseDuration)
+// and url{1,2} are valid urls
 func getParameters() []WebsiteParameter {
 	// Implementation could be optimized by first reading the size of the input file
 	var parameters []WebsiteParameter
@@ -55,11 +56,11 @@ func getParameters() []WebsiteParameter {
 			log.Fatalf("Converting from %s line %d : invalid url in first argument '%s'",
 				*filename, nLine, splitLine[0])
 		}
-		webParam.domain = splitLine[0]
-		interval, err := strconv.Atoi(splitLine[1])
+		webParam.url = splitLine[0]
+		interval, err := time.ParseDuration(splitLine[1])
 		if err != nil {
-			log.Fatalf("Converting from %s line %d : found non-int type for second argument '%s'",
-				*filename, nLine, splitLine[1])
+			log.Fatalf("Converting from %s line %d: %v",
+				*filename, nLine, err)
 		}
 		webParam.interval = interval
 		parameters = append(parameters, webParam)
