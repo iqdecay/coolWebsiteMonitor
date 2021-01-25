@@ -24,7 +24,7 @@ type WebsiteParameter struct {
 // url2 interval2
 // where interval{1,2} are duration (see https://golang.org/pkg/time/#ParseDuration)
 // and url{1,2} are valid urls
-func getParameters() []WebsiteParameter {
+func parseParameterFile() []WebsiteParameter {
 	// Implementation could be optimized by first reading the size of the input file
 	var parameters []WebsiteParameter
 	filename := flag.String("f", "websites.txt", "file path to read from")
