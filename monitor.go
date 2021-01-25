@@ -29,6 +29,8 @@ func newStatistics(duration time.Duration, interval time.Duration) *WebsiteStati
 	w := new(WebsiteStatistics)
 	w.maxSize = int64(duration / interval)
 	w.statusCodeCount = make(map[int]int)
+	w.responseTimeSum = time.Duration(0)
+	w.maxResponseTime = time.Duration(0)
 	return w
 }
 
@@ -36,11 +38,17 @@ func newStatistics(duration time.Duration, interval time.Duration) *WebsiteStati
 func (w *WebsiteStatistics) getAvailability() float32 {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
+	if w.currentSize == 0 {
+		return 0
+	}
 	return 100.0 * w.lastAvailabilities / float32(w.currentSize)
 }
 func (w *WebsiteStatistics) getAvgResponseTime() time.Duration {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
+	if w.currentSize == 0 {
+		return time.Duration(0)
+	}
 	durationNs := w.responseTimeSum.Nanoseconds()
 	return time.Duration(float32(durationNs) / float32(w.currentSize))
 }
