@@ -86,6 +86,7 @@ func (w *WebsiteStatistics) update(r HTTPResponse) {
 
 type Alert struct {
 	availability float32
+	url          string
 	since        time.Time
 	isDown       bool // if false, the alert is for recovery
 }
@@ -100,11 +101,13 @@ type WebsiteMonitor struct {
 	interval  time.Duration
 }
 
-func newMonitor(param WebsiteParameter) *WebsiteMonitor {
+func newMonitor(param WebsiteParameter, alerts chan Alert) *WebsiteMonitor {
 	m := new(WebsiteMonitor)
 	m.interval = param.interval
 	m.url = param.url
-	m.last2Min = newStatistics(2*time.Minute, m.interval)
+	m.alerts = alerts
+	// TODO : change for testing
+	m.last2Min = newStatistics(30*time.Second, m.interval)
 	m.last10Min = newStatistics(10*time.Minute, m.interval)
 	m.lastHour = newStatistics(1*time.Hour, m.interval)
 	return m
@@ -124,20 +127,21 @@ func getPerformance(url string) HTTPResponse {
 }
 func (m *WebsiteMonitor) checkForAlerts() {
 	past2MinAvail := m.last2Min.getAvailability()
-	// Website newly down
+	alert := Alert{
+		availability: past2MinAvail,
+		url:          m.url,
+		since:        time.Now(),
+	}
 	if past2MinAvail < 80.0 && !m.isDown {
-		m.alerts <- Alert{
-			availability: past2MinAvail,
-			since:        time.Now(),
-			isDown:       true,
-		}
+		// Website newly down
+		m.isDown = true
+		alert.isDown = true
+		m.alerts <- alert
 	} else if past2MinAvail >= 80.0 && m.isDown {
 		// Website recovered
-		m.alerts <- Alert{
-			availability: past2MinAvail,
-			since:        time.Now(),
-			isDown:       false,
-		}
+		m.isDown = false
+		alert.isDown = false
+		m.alerts <- alert
 	}
 
 }
