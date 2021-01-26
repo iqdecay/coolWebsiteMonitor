@@ -50,9 +50,11 @@ func main() {
 			<-minuteTicker.C
 			for _, url := range urls {
 				m := monitors[url]
+				m.lastHour.mu.RLock()
 				line := fmt.Sprintf("Last hour : %s : %d %v resp time  %.0f%% avail %v max",
 					url, m.lastHour.currentSize, m.lastHour.getAvgResponseTime(),
 					m.lastHour.getAvailability(), m.lastHour.maxResponseTime)
+				m.lastHour.mu.RUnlock()
 			}
 			log.Printf("-------------------------------")
 		}
