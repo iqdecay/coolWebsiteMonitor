@@ -48,6 +48,12 @@ func getPerformance(url string) HTTPResponse {
 	}
 }
 func (m *WebsiteMonitor) checkForAlerts() {
+	m.last2Min.mu.RLock()
+	defer m.last2Min.mu.RUnlock()
+	// TODO : change for production
+	if m.last2Min.getAge() < 30*time.Second {
+		return
+	}
 	past2MinAvail := m.last2Min.getAvailability()
 	alert := Alert{
 		availability: past2MinAvail,
@@ -65,7 +71,6 @@ func (m *WebsiteMonitor) checkForAlerts() {
 		alert.isDown = false
 		m.alerts <- alert
 	}
-
 }
 
 // Main monitoring loop, update each of the WebsiteStatistics
@@ -80,6 +85,8 @@ func (m *WebsiteMonitor) monitor() {
 		m.last2Min.update(lastPerf)
 		m.last10Min.update(lastPerf)
 		m.lastHour.update(lastPerf)
+		// TODO Issue if website is down : the response doesn't return, so
+		// the check isn't made until after the response comes
 		go m.checkForAlerts()
 		//log.Println(t.Format("05.999"), m.url, lastPerf.responseCode,
 		//	lastPerf.responseTime)

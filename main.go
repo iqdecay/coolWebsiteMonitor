@@ -10,12 +10,15 @@ const DATE_FORMAT = "2006-01-02 15:04:05"
 func main() {
 	parameters := parseParameterFile()
 	monitors := make(map[string]*WebsiteMonitor)
+	var urls = make([]string, 0)
 	alerts := make(chan Alert)
 
+	// Initialize monitoring
 	for _, v := range parameters {
 		param := v
 		m := newMonitor(param, alerts)
 		monitors[param.url] = m
+		urls = append(urls, param.url)
 		go func() {
 			m.monitor()
 		}()
@@ -27,10 +30,14 @@ func main() {
 		defer tenSecTicker.Stop()
 		for {
 			<-tenSecTicker.C
-			for url, m := range monitors {
-				log.Printf("Last 10 min :%s : %d %v resp time  %.0f%% avail %v max",
+			for _, url := range urls {
+				m := monitors[url]
+				m.last10Min.mu.RLock()
+				line := fmt.Sprintf("Last 10 min :%s : %d %v resp time  %.0f%% avail %v max",
 					url, m.last10Min.currentSize, m.last10Min.getAvgResponseTime(),
 					m.last10Min.getAvailability(), m.last10Min.maxResponseTime)
+				m.last10Min.mu.RUnlock()
+				displayLine(g, "logs", line)
 			}
 			log.Printf("-------------------------------")
 		}
@@ -41,8 +48,9 @@ func main() {
 		defer minuteTicker.Stop()
 		for {
 			<-minuteTicker.C
-			for url, m := range monitors {
-				log.Printf("Last hour : %s : %d %v resp time  %.0f%% avail %v max",
+			for _, url := range urls {
+				m := monitors[url]
+				line := fmt.Sprintf("Last hour : %s : %d %v resp time  %.0f%% avail %v max",
 					url, m.lastHour.currentSize, m.lastHour.getAvgResponseTime(),
 					m.lastHour.getAvailability(), m.lastHour.maxResponseTime)
 			}
