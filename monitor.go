@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"net/http/httptrace"
 	"time"
 )
 
@@ -28,22 +29,31 @@ func newMonitor(param WebsiteParameter, alerts chan Alert) *WebsiteMonitor {
 	m.interval = param.interval
 	m.url = param.url
 	m.alerts = alerts
-	// TODO : change for testing
+	// TODO : change for production
 	m.last2Min = newStatistics(30*time.Second, m.interval)
 	m.last10Min = newStatistics(10*time.Minute, m.interval)
 	m.lastHour = newStatistics(1*time.Hour, m.interval)
 	return m
 }
 
-// TODO : change to have the actual performance (TTFB) and not just RTT
+// Return the time to first byte and status code of an url
 func getPerformance(url string) HTTPResponse {
-	start := time.Now()
-	r, err := http.Get(url)
+	var start time.Time
+	var ttfb = new(time.Duration)
+	trace := &httptrace.ClientTrace{
+		GotFirstResponseByte: func() {
+			*ttfb = time.Since(start)
+		},
+	}
+	req, _ := http.NewRequest("GET", url, nil)
+	req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
+	start = time.Now()
+	r, err := http.DefaultTransport.RoundTrip(req)
 	if err != nil {
 		log.Fatalf("While fetching %s: %v", url, err)
 	}
 	return HTTPResponse{
-		responseTime: time.Since(start),
+		responseTime: *ttfb,
 		responseCode: r.StatusCode,
 	}
 }
@@ -88,47 +98,5 @@ func (m *WebsiteMonitor) monitor() {
 		// TODO Issue if website is down : the response doesn't return, so
 		// the check isn't made until after the response comes
 		go m.checkForAlerts()
-		//log.Println(t.Format("05.999"), m.url, lastPerf.responseCode,
-		//	lastPerf.responseTime)
 	}
 }
-
-//func monitor(url string) {
-//	var dns, tlsHandshake *time.Time
-//	var connect = new(time.Time)
-//	var start = new(time.Time)
-//	var dns = new(time.Time)
-//	trace := &httptrace.ClientTrace{
-//		DNSStart: func(dsi httptrace.DNSStartInfo) { *dns = time.Now() },
-//		DNSDone: func(ddi httptrace.DNSDoneInfo) {
-//			fmt.Printf("DNS Done: %v\n", time.Since(*dns))
-//		},
-//		TLSHandshakeStart: func() {
-//			*tlsHandshake = time.Now()
-//			fmt.Printf("TLSHandshake started %s\n", url)
-//		},
-//		TLSHandshakeDone: func(cs tls.ConnectionState, err error) {
-//			fmt.Printf("%s TLS Handshake: %v\n", url, time.Since(*tlsHandshake))
-//		},
-//		ConnectStart: func(network, addr string) { *connect = time.Now() },
-//		ConnectDone: func(network, addr string, err error) {
-//			fmt.Printf("%s Connect time: %v\n", url, time.Since(*connect))
-//		},
-//		GotFirstResponseByte: func() {
-//			fmt.Printf("%s Time from start to first byte: %v\n", url, time.Since(*start))
-//		},
-//	}
-//	req, _ := http.NewRequest("GET", url, nil)
-//	req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
-//	*start = time.Now()
-//	if _, err := http.DefaultTransport.RoundTrip(req); err != nil {
-//		log.Fatal(err)
-//	}
-//	//url = "https://github.com"
-//	//fmt.Printf("URL was changed : origin url %s, url %s\n", or, url)
-//	//start = time.Now()
-//	//if _, err := http.DefaultTransport.RoundTrip(req); err != nil {
-//	//	log.Fatal(err)
-//	//}
-//	fmt.Printf("%s Total time: %v\n", url, time.Since(*start))
-//}
