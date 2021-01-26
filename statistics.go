@@ -19,6 +19,7 @@ type WebsiteStatistics struct {
 	lastAvailabilities float32
 	responseTimeSum    time.Duration
 	maxResponseTime    time.Duration
+	windowSize           time.Duration
 	// The number of responses to store for the given amount of time
 	maxSize     int64
 	currentSize int64
@@ -31,6 +32,7 @@ func newStatistics(duration time.Duration, interval time.Duration) *WebsiteStati
 	w.statusCodeCount = make(map[int]int)
 	w.responseTimeSum = time.Duration(0)
 	w.maxResponseTime = time.Duration(0)
+	w.windowSize = duration
 	w.startTime = time.Now()
 	return w
 }

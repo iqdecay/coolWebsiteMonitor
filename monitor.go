@@ -57,25 +57,24 @@ func getPerformance(url string) HTTPResponse {
 		responseCode: r.StatusCode,
 	}
 }
-func (m *WebsiteMonitor) checkForAlerts() {
-	m.last2Min.mu.RLock()
-	defer m.last2Min.mu.RUnlock()
-	// TODO : change for production
-	if m.last2Min.getAge() < 30*time.Second {
+func (m *WebsiteMonitor) checkForAlerts(s *WebsiteStatistics) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.getAge() < s.windowSize {
 		return
 	}
-	past2MinAvail := m.last2Min.getAvailability()
+	pastPeriodAvail := s.getAvailability()
 	alert := Alert{
-		availability: past2MinAvail,
+		availability: pastPeriodAvail,
 		url:          m.url,
 		since:        time.Now(),
 	}
-	if past2MinAvail < 80.0 && !m.isDown {
+	if pastPeriodAvail < 80.0 && !m.isDown {
 		// Website newly down
 		m.isDown = true
 		alert.isDown = true
 		m.alerts <- alert
-	} else if past2MinAvail >= 80.0 && m.isDown {
+	} else if pastPeriodAvail >= 80.0 && m.isDown {
 		// Website recovered
 		m.isDown = false
 		alert.isDown = false
@@ -97,7 +96,7 @@ func (m *WebsiteMonitor) monitor() {
 			//	Need a separate routine, because if the website is down,
 			//	the response might not come right away
 			// It might create false positives if the website is slow to answer
-			m.checkForAlerts()
+			m.checkForAlerts(m.last2Min)
 		}
 	}()
 	for {
