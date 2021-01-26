@@ -22,6 +22,7 @@ type WebsiteStatistics struct {
 	// The number of responses to store for the given amount of time
 	maxSize     int64
 	currentSize int64
+	startTime   time.Time
 }
 
 func newStatistics(duration time.Duration, interval time.Duration) *WebsiteStatistics {
@@ -30,6 +31,7 @@ func newStatistics(duration time.Duration, interval time.Duration) *WebsiteStati
 	w.statusCodeCount = make(map[int]int)
 	w.responseTimeSum = time.Duration(0)
 	w.maxResponseTime = time.Duration(0)
+	w.startTime = time.Now()
 	return w
 }
 
@@ -51,6 +53,11 @@ func (w *WebsiteStatistics) getAvgResponseTime() time.Duration {
 	durationNs := w.responseTimeSum.Nanoseconds()
 	return time.Duration(float32(durationNs) / float32(w.currentSize))
 }
+func (w *WebsiteStatistics) getAge() time.Duration {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return time.Since(w.startTime)
+}
 
 func (w *WebsiteStatistics) update(r HTTPResponse) {
 	w.mu.Lock()
@@ -65,7 +72,7 @@ func (w *WebsiteStatistics) update(r HTTPResponse) {
 			w.lastAvailabilities--
 		}
 		// Do O(n) search for the new max, can be avoided but
-		// not without useless overhead (new datastructure)
+		// not without useless overhead (new datastructures)
 		if discard.responseTime == w.maxResponseTime {
 			newMax := time.Duration(0)
 			for _, r := range w.lastResponses {
