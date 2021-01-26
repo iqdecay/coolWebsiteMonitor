@@ -89,14 +89,22 @@ func (m *WebsiteMonitor) monitor() {
 	a.isDown = false
 	ticker := time.NewTicker(m.interval)
 	defer ticker.Stop()
+	alertsTicker := time.NewTicker(m.interval)
+	defer alertsTicker.Stop()
+	go func() {
+		for {
+			<-alertsTicker.C
+			//	Need a separate routine, because if the website is down,
+			//	the response might not come right away
+			// It might create false positives if the website is slow to answer
+			m.checkForAlerts()
+		}
+	}()
 	for {
 		<-ticker.C
 		lastPerf := getPerformance(m.url)
 		m.last2Min.update(lastPerf)
 		m.last10Min.update(lastPerf)
 		m.lastHour.update(lastPerf)
-		// TODO Issue if website is down : the response doesn't return, so
-		// the check isn't made until after the response comes
-		go m.checkForAlerts()
 	}
 }
