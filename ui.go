@@ -65,7 +65,8 @@ func quit(g *gocui.Gui, v *gocui.View) error {
 func update(g *gocui.Gui) error {
 	return nil
 }
-func displayLine(g *gocui.Gui, viewName string, line string) error {
+
+func displayLine(g *gocui.Gui, viewName string, line string) {
 	g.Update(
 		func(g *gocui.Gui) error {
 			if line[len(line)-1:] != "\n" {
@@ -73,14 +74,20 @@ func displayLine(g *gocui.Gui, viewName string, line string) error {
 			}
 			byteMessage := []byte(line)
 			originalView := g.CurrentView()
-			g.SetCurrentView(viewName)
-			v := g.CurrentView()
-			v.Write(byteMessage)
-			g.SetCurrentView(originalView.Name())
-			g.Update(update)
+			v, err := g.SetCurrentView(viewName)
+			if err != nil {
+				return err
+			}
+			_, err = v.Write(byteMessage)
+			if err != nil {
+				return err
+			}
+			_, err = g.SetCurrentView(originalView.Name())
+			if err != nil {
+				return err
+			}
 			return nil
 		})
-	return nil
 }
 
 func switchView(g *gocui.Gui, v *gocui.View) error {
@@ -88,7 +95,7 @@ func switchView(g *gocui.Gui, v *gocui.View) error {
 		func(g *gocui.Gui) error {
 			currentView := g.CurrentView()
 			currentView.Autoscroll = true
-			originalViewName := g.CurrentView().Name()
+			originalViewName := currentView.Name()
 			var newViewName string
 			if originalViewName == "logs" {
 				newViewName = "alerts"
