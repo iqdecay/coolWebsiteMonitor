@@ -1,7 +1,8 @@
 package main
 
 import (
-	"log"
+	"fmt"
+	"github.com/jroimartin/gocui"
 	"time"
 )
 
@@ -23,9 +24,21 @@ func main() {
 			m.monitor()
 		}()
 	}
-
+	// Init ui
+	g, err := gocui.NewGui(gocui.OutputNormal)
+	if err != nil {
+		panic(err)
+	}
+	defer g.Close()
+	g.Cursor = true
+	g.Mouse = true
+	g.SetManagerFunc(layout)
+	err = initKeyBindings(g)
+	if err != nil {
+		panic(err)
+	}
+	// Every 10 seconds, poll the values of the last minute
 	go func() {
-		// Every 10 seconds, poll the values of the last minute
 		tenSecTicker := time.NewTicker(10 * time.Second)
 		defer tenSecTicker.Stop()
 		for {
@@ -39,11 +52,10 @@ func main() {
 				m.last10Min.mu.RUnlock()
 				displayLine(g, "logs", line)
 			}
-			log.Printf("-------------------------------")
 		}
 	}()
+	//Every minute, poll the values of the past hour
 	go func() {
-		// Every minute, poll the values of the past hour
 		minuteTicker := time.NewTicker(time.Minute)
 		defer minuteTicker.Stop()
 		for {
@@ -55,19 +67,26 @@ func main() {
 					url, m.lastHour.currentSize, m.lastHour.getAvgResponseTime(),
 					m.lastHour.getAvailability(), m.lastHour.maxResponseTime)
 				m.lastHour.mu.RUnlock()
+				displayLine(g, "logs", line)
 			}
-			log.Printf("-------------------------------")
 		}
 	}()
-	// Handle incoming alerts
-	for {
-		a := <-alerts
-		if a.isDown {
-			log.Printf("Website %s is down. availability=%.0f%%, time=%v",
-				a.url, a.availability, a.since.Format(DATE_FORMAT))
-		} else {
-			log.Printf("Website %s recovered. availability=%.0f%%, time=%v",
-				a.url, a.availability, a.since.Format(DATE_FORMAT))
+	//Handle incoming alerts
+	go func() {
+		for {
+			a := <-alerts
+			var line string
+			if a.isDown {
+				line = fmt.Sprintf("Website %s is down. availability=%.0f%%, time=%v",
+					a.url, a.availability, a.since.Format(DATE_FORMAT))
+			} else {
+				line = fmt.Sprintf("Website %s recovered. availability=%.0f%%, time=%v",
+					a.url, a.availability, a.since.Format(DATE_FORMAT))
+			}
+			displayLine(g, "alerts", line)
 		}
+	}()
+	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
+		panic(err)
 	}
 }
