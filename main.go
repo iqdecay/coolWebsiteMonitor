@@ -3,15 +3,28 @@ package main
 import (
 	"fmt"
 	"github.com/jroimartin/gocui"
+	"strings"
 	"time"
 )
 
 const DATE_FORMAT = "2006-01-02 15:04:05"
 
+// Format duration to avoid unnecessary precision
+func formatDuration(duration time.Duration) string {
+	durationAsString := duration.String()
+	index := strings.IndexRune(durationAsString, 'n')
+	// if the time is in nanoseconds
+	if index != - 1 {
+		return duration.Round(time.Nanosecond).String()
+	} else {
+		return duration.Round(time.Millisecond).String()
+	}
+}
+
 func main() {
 	parameters := parseParameterFile()
 	monitors := make(map[string]*WebsiteMonitor)
-	var urls = make([]string, 0)
+	var domains = make([]string, 0)
 	alerts := make(chan Alert)
 	done := make(chan bool)
 
@@ -19,13 +32,15 @@ func main() {
 	for _, v := range parameters {
 		param := v
 		m := newMonitor(param, alerts)
-		monitors[param.url] = m
-		urls = append(urls, param.url)
+		domain := param.url[strings.Index(param.url, "//")+2:]
+		monitors[domain] = m
+		domains = append(domains, domain)
 		// The "done" channel here is not useful since shared, see README
 		go func() {
 			m.monitor(done)
 		}()
 	}
+
 	// Init ui
 	g, err := gocui.NewGui(gocui.OutputNormal)
 	if err != nil {
@@ -45,12 +60,13 @@ func main() {
 		defer tenSecTicker.Stop()
 		for {
 			<-tenSecTicker.C
-			for _, url := range urls {
-				m := monitors[url]
+			for _, domain := range domains {
+				m := monitors[domain]
 				m.last10Min.mu.RLock()
-				line := fmt.Sprintf("Last 10 min :%s : %d %v resp time  %.0f%% avail %v max",
-					url, m.last10Min.currentSize, m.last10Min.getAvgResponseTime(),
-					m.last10Min.getAvailability(), m.last10Min.maxResponseTime)
+				avgResp := formatDuration(m.last10Min.getAvgResponseTime())
+				maxResp := formatDuration(m.last10Min.maxResponseTime)
+				line := fmt.Sprintf("last 10 min %-30s : avg %-7s max %-7s avail %.0f%% ",
+					domain, avgResp, maxResp, m.last10Min.getAvailability())
 				m.last10Min.mu.RUnlock()
 				displayLine(g, "logs", line)
 			}
@@ -62,12 +78,13 @@ func main() {
 		defer minuteTicker.Stop()
 		for {
 			<-minuteTicker.C
-			for _, url := range urls {
-				m := monitors[url]
+			for _, domain := range domains {
+				m := monitors[domain]
 				m.lastHour.mu.RLock()
-				line := fmt.Sprintf("Last hour : %s : %d %v resp time  %.0f%% avail %v max",
-					url, m.lastHour.currentSize, m.lastHour.getAvgResponseTime(),
-					m.lastHour.getAvailability(), m.lastHour.maxResponseTime)
+				avgResp := formatDuration(m.lastHour.getAvgResponseTime())
+				maxResp := formatDuration(m.lastHour.maxResponseTime)
+				line := fmt.Sprintf("last hour %-30s : avg %-7s max %-7s avail %.0f%% ",
+					domain, avgResp, maxResp, m.lastHour.getAvailability())
 				m.lastHour.mu.RUnlock()
 				displayLine(g, "logs", line)
 			}
