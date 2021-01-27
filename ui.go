@@ -18,7 +18,7 @@ func navigator(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
 func layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	// Log history, scrollable
-	if v, err := g.SetView("logs", 1, 1, maxX/2-1, maxY-1); err != nil {
+	if v, err := g.SetView("logs", 1, 1, maxX-1, maxY/2-1); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -35,7 +35,7 @@ func layout(g *gocui.Gui) error {
 	}
 
 	// Alert history, scrollable
-	if v, err := g.SetView("alerts", maxX/2+1, 1, maxX-1, maxY-1); err != nil {
+	if v, err := g.SetView("alerts", 1, maxY/2+1, maxX-1, maxY-1); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
