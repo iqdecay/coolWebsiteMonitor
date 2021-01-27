@@ -1,0 +1,5 @@
+http://google.com 1s
+https://github.com 500ms
+https://binance.com 2s
+https://httpbin.org/delay/1 2s
+https://httpbin.org/status/503 1s
