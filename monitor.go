@@ -45,7 +45,7 @@ func getPerformance(url string) HTTPResponse {
 			*ttfb = time.Since(start)
 		},
 	}
-	req, _ := http.NewRequest("GET", url, nil)
+	req, _ := http.NewRequest("HEAD", url, nil)
 	req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
 	start = time.Now()
 	r, err := http.DefaultTransport.RoundTrip(req)
@@ -83,27 +83,37 @@ func (m *WebsiteMonitor) checkForAlerts(s *WebsiteStatistics) {
 }
 
 // Main monitoring loop, update each of the WebsiteStatistics
-func (m *WebsiteMonitor) monitor() {
+func (m *WebsiteMonitor) monitor(done chan bool) {
 	a := Alert{}
 	a.isDown = false
 	ticker := time.NewTicker(m.interval)
 	defer ticker.Stop()
 	alertsTicker := time.NewTicker(m.interval)
 	defer alertsTicker.Stop()
+	alertsDone := make(chan bool)
 	go func() {
 		for {
-			<-alertsTicker.C
-			//	Need a separate routine, because if the website is down,
-			//	the response might not come right away
-			// It might create false positives if the website is slow to answer
-			m.checkForAlerts(m.last2Min)
+			select {
+			case <-alertsTicker.C:
+				//	Need a separate routine, because if the website is down,
+				//	the response might not come right away
+				// It might create false positives if the website is slow to answer
+				m.checkForAlerts(m.last2Min)
+			case <-alertsDone:
+				return
+			}
 		}
 	}()
 	for {
-		<-ticker.C
-		lastPerf := getPerformance(m.url)
-		m.last2Min.update(lastPerf)
-		m.last10Min.update(lastPerf)
-		m.lastHour.update(lastPerf)
+		select {
+		case <-ticker.C:
+			lastPerf := getPerformance(m.url)
+			m.last2Min.update(lastPerf)
+			m.last10Min.update(lastPerf)
+			m.lastHour.update(lastPerf)
+		case <-done:
+			alertsDone <- true
+			return
+		}
 	}
 }

@@ -13,6 +13,7 @@ func main() {
 	monitors := make(map[string]*WebsiteMonitor)
 	var urls = make([]string, 0)
 	alerts := make(chan Alert)
+	done := make(chan bool)
 
 	// Initialize monitoring
 	for _, v := range parameters {
@@ -21,7 +22,7 @@ func main() {
 		monitors[param.url] = m
 		urls = append(urls, param.url)
 		go func() {
-			m.monitor()
+			m.monitor(done)
 		}()
 	}
 	// Init ui
