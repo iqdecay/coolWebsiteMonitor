@@ -21,6 +21,7 @@ func main() {
 		m := newMonitor(param, alerts)
 		monitors[param.url] = m
 		urls = append(urls, param.url)
+		// The "done" channel here is not useful since shared, see README
 		go func() {
 			m.monitor(done)
 		}()
@@ -38,7 +39,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// Every 10 seconds, poll the values of the last minute
+	// Every 10 seconds, poll the values of the last 10 minutes
 	go func() {
 		tenSecTicker := time.NewTicker(10 * time.Second)
 		defer tenSecTicker.Stop()

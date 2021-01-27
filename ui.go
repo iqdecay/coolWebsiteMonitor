@@ -5,16 +5,12 @@ import (
 )
 
 func navigator(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
-	// Rules for navigating the chat history
+	// Rules for navigating the panel history
 	switch {
 	case key == gocui.KeyArrowUp:
 		v.MoveCursor(0, -1, false)
 	case key == gocui.KeyArrowDown:
 		v.MoveCursor(0, 1, false)
-	case key == gocui.KeyArrowLeft:
-		v.MoveCursor(-1, 0, false)
-	case key == gocui.KeyArrowRight:
-		v.MoveCursor(1, 0, false)
 	}
 }
 
@@ -66,6 +62,7 @@ func update(g *gocui.Gui) error {
 	return nil
 }
 
+// Display line in the corresponding view
 func displayLine(g *gocui.Gui, viewName string, line string) {
 	g.Update(
 		func(g *gocui.Gui) error {
@@ -90,6 +87,7 @@ func displayLine(g *gocui.Gui, viewName string, line string) {
 		})
 }
 
+// Switch from one pane to the other
 func switchView(g *gocui.Gui, v *gocui.View) error {
 	g.Update(
 		func(g *gocui.Gui) error {
@@ -118,23 +116,26 @@ func initKeyBindings(g *gocui.Gui) error {
 		return err
 	}
 
-	if err := g.SetKeybinding("", gocui.KeyArrowLeft, gocui.ModNone, switchView);
-		err != nil {
+	// Switch to the next pane using left arrow key
+	if err := g.SetKeybinding("", gocui.KeyArrowLeft, gocui.ModNone, switchView); err != nil {
 		return err
 	}
+
+	// Switch to the next pane using right arrow key
+	if err := g.SetKeybinding("", gocui.KeyArrowRight, gocui.ModNone, switchView); err != nil {
+		return err
+	}
+
+	// Allow scrolling-up when pressing enter
 	if err := g.SetKeybinding("", gocui.KeyEnter, gocui.ModNone,
 		func(g *gocui.Gui, v *gocui.View) error {
 			currentView := g.CurrentView()
 			currentView.Autoscroll = false
 			g.Update(update)
 			return nil
-		});
-		err != nil {
+		}); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("", gocui.KeyArrowRight, gocui.ModNone, switchView);
-		err != nil {
-		return err
-	}
+
 	return nil
 }

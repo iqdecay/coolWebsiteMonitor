@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// Represents the parameters for one of the monitored website
+// Parameters for one of the monitored website
 type WebsiteParameter struct {
 	url      string        // Website to check, has to be a valid url
 	interval time.Duration // Time between checks

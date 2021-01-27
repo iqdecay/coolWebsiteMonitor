@@ -14,6 +14,7 @@ type Alert struct {
 	isDown       bool // if false, the alert is for recovery
 }
 
+// Main monitoring device, specific to a website
 type WebsiteMonitor struct {
 	last2Min  *WebsiteStatistics
 	last10Min *WebsiteStatistics
@@ -24,13 +25,13 @@ type WebsiteMonitor struct {
 	interval  time.Duration
 }
 
+// Create a monitor with 3 statistics collectors
 func newMonitor(param WebsiteParameter, alerts chan Alert) *WebsiteMonitor {
 	m := new(WebsiteMonitor)
 	m.interval = param.interval
 	m.url = param.url
 	m.alerts = alerts
-	// TODO : change for production
-	m.last2Min = newStatistics(30*time.Second, m.interval)
+	m.last2Min = newStatistics(2*time.Minute, m.interval)
 	m.last10Min = newStatistics(10*time.Minute, m.interval)
 	m.lastHour = newStatistics(1*time.Hour, m.interval)
 	return m
@@ -57,6 +58,8 @@ func getPerformance(url string) HTTPResponse {
 		responseCode: r.StatusCode,
 	}
 }
+
+// Check for alerts if the monitoring started a while ago
 func (m *WebsiteMonitor) checkForAlerts(s *WebsiteStatistics) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -95,9 +98,8 @@ func (m *WebsiteMonitor) monitor(done chan bool) {
 		for {
 			select {
 			case <-alertsTicker.C:
-				//	Need a separate routine, because if the website is down,
-				//	the response might not come right away
-				// It might create false positives if the website is slow to answer
+				//	Need a separate routine to avoid taking into account
+				// long response times
 				m.checkForAlerts(m.last2Min)
 			case <-alertsDone:
 				return

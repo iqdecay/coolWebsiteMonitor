@@ -19,13 +19,14 @@ type WebsiteStatistics struct {
 	lastAvailabilities float32
 	responseTimeSum    time.Duration
 	maxResponseTime    time.Duration
-	windowSize           time.Duration
+	windowSize         time.Duration
 	// The number of responses to store for the given amount of time
 	maxSize     int64
 	currentSize int64
 	startTime   time.Time
 }
 
+// Initialize a new Statistics object
 func newStatistics(duration time.Duration, interval time.Duration) *WebsiteStatistics {
 	w := new(WebsiteStatistics)
 	w.maxSize = int64(duration / interval)
@@ -46,6 +47,8 @@ func (w *WebsiteStatistics) getAvailability() float32 {
 	}
 	return 100.0 * w.lastAvailabilities / float32(w.currentSize)
 }
+
+// Return the average response time (as a Go duration)
 func (w *WebsiteStatistics) getAvgResponseTime() time.Duration {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
@@ -55,12 +58,15 @@ func (w *WebsiteStatistics) getAvgResponseTime() time.Duration {
 	durationNs := w.responseTimeSum.Nanoseconds()
 	return time.Duration(float32(durationNs) / float32(w.currentSize))
 }
+
+// Get time since creation of the instance
 func (w *WebsiteStatistics) getAge() time.Duration {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 	return time.Since(w.startTime)
 }
 
+// Update with the latest HTTP response from the website
 func (w *WebsiteStatistics) update(r HTTPResponse) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
