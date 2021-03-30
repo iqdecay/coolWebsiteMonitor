@@ -34,14 +34,14 @@ Normally, all tests pass
 
 ## Design choices with this application 
 
-- Using Golang seemed like an obvious choice. It is a language I know well, and it has
-a very simple yet very effective system for handling concurrency.
+- Using Golang seemed like an obvious choice. It has a very simple yet very
+  effective system for handling concurrency.
 
-- I chose to use a third-party module, [gocui](https://github.com/jroimartin/gocui),
-to display a nice-looking interface for the logs and alert. Indeed, using only the command-line
-would have made the requirement of keeping the alerts displayed either difficult or ugly.
-The repository has around 7k stars on Github, and the code is easily readable, plus I had prior
-experience with it, so it was a natural choice.
+- I chose to use a third-party module,
+  [gocui](https://github.com/jroimartin/gocui), to display a nice-looking
+  interface for the logs and alert. The repository has around 7k stars on
+  Github, and the code is easily readable, plus I had prior experience with it,
+  so it was a natural choice.
 
 
 ## Improvements :
