@@ -26,7 +26,7 @@ type WebsiteMonitor struct {
 }
 
 // Create a monitor with 3 statistics collectors
-func newMonitor(param WebsiteParameter, alerts chan Alert) *WebsiteMonitor {
+func newMonitor(param UrlWatchParameters, alerts chan Alert) *WebsiteMonitor {
 	m := new(WebsiteMonitor)
 	m.interval = param.interval
 	m.url = param.url

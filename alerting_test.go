@@ -21,7 +21,7 @@ func TestAlertOdd(t *testing.T) {
 
 func checkAlerts(t *testing.T, interval time.Duration, alertWindow time.Duration,
 	dtStart time.Duration, dtEnd time.Duration) {
-	parameters := WebsiteParameter{
+	parameters := UrlWatchParameters{
 		url:      "http://localhost:8080",
 		interval: interval,
 	}

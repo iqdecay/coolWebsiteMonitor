@@ -12,7 +12,7 @@ import (
 )
 
 // Parameters for one of the monitored website
-type WebsiteParameter struct {
+type UrlWatchParameters struct {
 	url      string        // Website to check, has to be a valid url
 	interval time.Duration // Time between checks
 }
@@ -24,9 +24,9 @@ type WebsiteParameter struct {
 // url2 interval2
 // where interval{1,2} are duration (see https://golang.org/pkg/time/#ParseDuration)
 // and url{1,2} are valid urls
-func parseParameterFile() []WebsiteParameter {
+func parseParameterFile() []UrlWatchParameters {
 	// Implementation could be optimized by first reading the size of the input file
-	var parameters []WebsiteParameter
+	var parameters []UrlWatchParameters
 	filename := flag.String("f", "websites.txt", "file path to read from")
 	flag.Parse()
 
@@ -50,7 +50,7 @@ func parseParameterFile() []WebsiteParameter {
 				*filename, nLine, len(splitLine))
 		}
 		// Check url validity
-		webParam := WebsiteParameter{}
+		webParam := UrlWatchParameters{}
 		_, err := url2.ParseRequestURI(splitLine[0])
 		if err != nil {
 			log.Fatalf("Converting from %s line %d : invalid url in first argument '%s'",
