@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"net/http/httptrace"
@@ -47,7 +48,10 @@ func getPerformance(url string) UrlLastResponse {
 		},
 	}
 	req, _ := http.NewRequest("HEAD", url, nil)
-	req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
+	// A request taking more than one minute is invalid
+	ctx, cancel := context.WithTimeout(req.Context(), time.Minute)
+	defer cancel()
+	req = req.WithContext(httptrace.WithClientTrace(ctx, trace))
 	start = time.Now()
 	r, err := http.DefaultTransport.RoundTrip(req)
 	if err != nil {
