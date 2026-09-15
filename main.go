@@ -56,12 +56,11 @@ func main() {
 			<-tenSecTicker.C
 			for _, domain := range domains {
 				m := monitors[domain]
-				m.last10Min.mu.RLock()
 				avgResp := formatDuration(m.last10Min.getAvgResponseTime())
-				maxResp := formatDuration(m.last10Min.maxResponseTime)
-				line := fmt.Sprintf("last 10 min %-30s : avg %-7s max %-7s avail %.0f%% ",
-					domain, avgResp, maxResp, m.last10Min.getAvailability())
-				m.last10Min.mu.RUnlock()
+				maxResp := formatDuration(m.last10Min.getMaxResponseTime())
+				availability := m.last10Min.getAvailability()
+				line := fmt.Sprintf("last 10min %-30s : avg %-7s max %-7s avail %.0f%% ",
+					domain, avgResp, maxResp, availability)
 				displayLine(g, "logs", line)
 			}
 		}
@@ -74,12 +73,11 @@ func main() {
 			<-minuteTicker.C
 			for _, domain := range domains {
 				m := monitors[domain]
-				m.lastHour.mu.RLock()
 				avgResp := formatDuration(m.lastHour.getAvgResponseTime())
-				maxResp := formatDuration(m.lastHour.maxResponseTime)
+				maxResp := formatDuration(m.lastHour.getMaxResponseTime())
+				availability := m.lastHour.getAvailability()
 				line := fmt.Sprintf("last hour %-30s : avg %-7s max %-7s avail %.0f%% ",
-					domain, avgResp, maxResp, m.lastHour.getAvailability())
-				m.lastHour.mu.RUnlock()
+					domain, avgResp, maxResp, availability)
 				displayLine(g, "logs", line)
 			}
 		}

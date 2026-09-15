@@ -59,6 +59,12 @@ func (w *WebsiteStatistics) getAvgResponseTime() time.Duration {
 	return time.Duration(float32(durationNs) / float32(w.currentSize))
 }
 
+func (w *WebsiteStatistics) getMaxResponseTime() time.Duration {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.maxResponseTime
+}
+
 // Get time since creation of the instance
 func (w *WebsiteStatistics) getAge() time.Duration {
 	w.mu.RLock()

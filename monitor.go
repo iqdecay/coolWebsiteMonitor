@@ -61,8 +61,6 @@ func getPerformance(url string) HTTPResponse {
 
 // Check for alerts if the monitoring started a while ago
 func (m *WebsiteMonitor) checkForAlerts(s *WebsiteStatistics) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
 	if s.getAge() < s.windowSize {
 		return
 	}
