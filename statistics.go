@@ -70,8 +70,10 @@ func (w *WebsiteStatistics) getAge() time.Duration {
 func (w *WebsiteStatistics) update(r HTTPResponse) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	// The queue is full, discard least recent
-	if w.currentSize == w.maxSize {
+	if w.currentSize < w.maxSize {
+		w.currentSize += 1
+		// The queue is full, discard least recent
+	} else {
 		discard := w.lastResponses[0]
 		w.responseTimeSum -= discard.responseTime
 		w.lastResponses = w.lastResponses[1:]
@@ -90,8 +92,6 @@ func (w *WebsiteStatistics) update(r HTTPResponse) {
 			}
 			w.maxResponseTime = newMax
 		}
-	} else {
-		w.currentSize += 1
 	}
 	if r.responseTime > w.maxResponseTime {
 		w.maxResponseTime = r.responseTime

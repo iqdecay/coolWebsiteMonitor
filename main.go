@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/jroimartin/gocui"
 	"strings"
 	"time"
+
+	"github.com/jroimartin/gocui"
 )
 
 const DATE_FORMAT = "2006-01-02 15:04:05"
