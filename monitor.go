@@ -38,7 +38,7 @@ func newMonitor(param UrlWatchParameters, alerts chan Alert) *WebsiteMonitor {
 }
 
 // Return the time to first byte and status code of an url
-func getPerformance(url string) HTTPResponse {
+func getPerformance(url string) UrlLastResponse {
 	var start time.Time
 	var ttfb = new(time.Duration)
 	trace := &httptrace.ClientTrace{
@@ -53,7 +53,7 @@ func getPerformance(url string) HTTPResponse {
 	if err != nil {
 		log.Fatalf("While fetching %s: %v", url, err)
 	}
-	return HTTPResponse{
+	return UrlLastResponse{
 		responseTime: *ttfb,
 		responseCode: r.StatusCode,
 	}

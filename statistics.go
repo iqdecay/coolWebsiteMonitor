@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type HTTPResponse struct {
+type UrlLastResponse struct {
 	responseTime time.Duration
 	responseCode int // HTTP response code
 }
@@ -14,7 +14,7 @@ type HTTPResponse struct {
 // Holds the statistics for a given amount of time (e.g. last 10 min)
 type WebsiteStatistics struct {
 	mu                 sync.RWMutex
-	lastResponses      []HTTPResponse
+	lastResponses      []UrlLastResponse
 	statusCodeCount    map[int]int
 	lastAvailabilities float32
 	responseTimeSum    time.Duration
@@ -73,7 +73,7 @@ func (w *WebsiteStatistics) getAge() time.Duration {
 }
 
 // Update with the latest HTTP response from the website
-func (w *WebsiteStatistics) update(r HTTPResponse) {
+func (w *WebsiteStatistics) update(r UrlLastResponse) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	if w.currentSize < w.maxSize {
