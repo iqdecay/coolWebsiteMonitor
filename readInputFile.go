@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"flag"
-	"fmt"
 	"log"
 	url2 "net/url"
 	"os"
@@ -11,7 +10,7 @@ import (
 	"time"
 )
 
-// Parameters for one of the monitored website
+// UrlWatchParameters holds parameters for a url watched by the monitor
 type UrlWatchParameters struct {
 	url      string        // Website to check, has to be a valid url
 	interval time.Duration // Time between checks
@@ -40,36 +39,37 @@ func parseParameterFile() []UrlWatchParameters {
 		}
 	}()
 	s := bufio.NewScanner(f)
-	nLine := 1
 	log.Printf("Reading %s ...", *filename)
+	nLine := 1
 	for s.Scan() {
-		line := strings.Trim(s.Text(), " ")
-		splitLine := strings.Split(line, " ")
-		if len(splitLine) != 2 {
-			log.Fatalf("Reading %s line %d: expected 2 words found %d",
-				*filename, nLine, len(splitLine))
-		}
-		// Check url validity
-		webParam := UrlWatchParameters{}
-		_, err := url2.ParseRequestURI(splitLine[0])
-		if err != nil {
-			log.Fatalf("Converting from %s line %d : invalid url in first argument '%s'",
-				*filename, nLine, splitLine[0])
-		}
-		webParam.url = splitLine[0]
-		interval, err := time.ParseDuration(splitLine[1])
-		if err != nil {
-			log.Fatalf("Converting from %s line %d: %v",
-				*filename, nLine, err)
-		}
-		webParam.interval = interval
-		parameters = append(parameters, webParam)
+		urlWatchParams := extractUrlWatchParameterFromLine(s.Text(), nLine, *filename)
+		parameters = append(parameters, urlWatchParams)
 		nLine++
 	}
-	err = s.Err()
 	if err := s.Err(); err != nil {
-		fmt.Fprintln(os.Stderr, "reading standard input:", err)
+		log.Fatalf("Reading standard input: %v", err)
 	}
 	log.Printf("Done")
 	return parameters
+}
+
+func extractUrlWatchParameterFromLine(s string, nLine int, filename string) UrlWatchParameters {
+	line := strings.Trim(s, " ")
+	splitLine := strings.Split(line, " ")
+	if len(splitLine) != 2 {
+		log.Fatalf("Reading %s line %d: expected 2 words found %d",
+			filename, nLine, len(splitLine))
+	}
+	urlString, intervalString := splitLine[0], splitLine[1]
+	_, err := url2.ParseRequestURI(urlString)
+	if err != nil {
+		log.Fatalf("Converting from %s line %d : invalid url in first argument '%s'",
+			filename, nLine, urlString)
+	}
+	interval, err := time.ParseDuration(intervalString)
+	if err != nil {
+		log.Fatalf("Converting from %s line %d: %v",
+			filename, nLine, err)
+	}
+	return UrlWatchParameters{urlString, interval}
 }
