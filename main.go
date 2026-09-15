@@ -11,14 +11,7 @@ const DATE_FORMAT = "2006-01-02 15:04:05"
 
 // Format duration to avoid unnecessary precision
 func formatDuration(duration time.Duration) string {
-	durationAsString := duration.String()
-	index := strings.IndexRune(durationAsString, 'n')
-	// if the time is in nanoseconds
-	if index != - 1 {
-		return duration.Round(time.Nanosecond).String()
-	} else {
-		return duration.Round(time.Millisecond).String()
-	}
+	return duration.Round(time.Millisecond).String()
 }
 
 func main() {
