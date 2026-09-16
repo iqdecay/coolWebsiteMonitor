@@ -24,8 +24,7 @@ func main() {
 	done := make(chan bool)
 
 	// Initialize monitoring
-	for _, v := range parameters {
-		param := v
+	for _, param := range parameters {
 		m := newMonitor(param, alerts)
 		domain := param.url[strings.Index(param.url, "//")+2:]
 		monitors[domain] = m
