@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"log"
-	url2 "net/url"
+	urlpkg "net/url"
 	"os"
 	"strings"
 	"time"
@@ -61,7 +61,7 @@ func extractUrlWatchParameterFromLine(s string, nLine int, filename string) UrlW
 			filename, nLine, len(splitLine))
 	}
 	urlString, intervalString := splitLine[0], splitLine[1]
-	_, err := url2.ParseRequestURI(urlString)
+	_, err := urlpkg.ParseRequestURI(urlString)
 	if err != nil {
 		log.Fatalf("Converting from %s line %d : invalid url in first argument '%s'",
 			filename, nLine, urlString)
