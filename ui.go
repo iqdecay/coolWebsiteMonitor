@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/jroimartin/gocui"
@@ -21,7 +22,7 @@ func layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	// Log history, scrollable
 	if v, err := g.SetView("logs", 1, 1, maxX-1, maxY/2-1); err != nil {
-		if err != gocui.ErrUnknownView {
+		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
 		if _, err := g.SetCurrentView("logs"); err != nil {
@@ -38,7 +39,7 @@ func layout(g *gocui.Gui) error {
 
 	// Alert history, scrollable
 	if v, err := g.SetView("alerts", 1, maxY/2+1, maxX-1, maxY-1); err != nil {
-		if err != gocui.ErrUnknownView {
+		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
 		if _, err := g.SetCurrentView("alerts"); err != nil {
