@@ -103,12 +103,7 @@ func (w *WebsiteStatistics) update(r UrlLastResponse) {
 		w.maxResponseTime = r.responseTime
 	}
 	w.lastResponses = append(w.lastResponses, r)
-	_, ok := w.statusCodeCount[r.responseCode]
-	if ok {
-		w.statusCodeCount[r.responseCode]++
-	} else {
-		w.statusCodeCount[r.responseCode] = 1
-	}
+	w.statusCodeCount[r.responseCode]++
 	if r.responseCode != http.StatusServiceUnavailable {
 		w.lastAvailabilities++
 	}
