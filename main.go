@@ -34,19 +34,8 @@ func main() {
 		go m.monitor(done)
 	}
 
-	// Init ui
-	g, err := gocui.NewGui(gocui.OutputNormal)
-	if err != nil {
-		panic(err)
-	}
+	g := InitGui()
 	defer g.Close()
-	g.Cursor = true
-	g.Mouse = true
-	g.SetManagerFunc(layout)
-	err = initKeyBindings(g)
-	if err != nil {
-		panic(err)
-	}
 	// Every 10 seconds, poll the values of the last 10 minutes
 	go func() {
 		tenSecTicker := time.NewTicker(10 * time.Second)

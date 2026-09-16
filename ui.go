@@ -65,6 +65,21 @@ func update(g *gocui.Gui) error {
 	return nil
 }
 
+func InitGui() *gocui.Gui {
+	g, err := gocui.NewGui(gocui.OutputNormal)
+	if err != nil {
+		panic(err)
+	}
+	g.Cursor = true
+	g.Mouse = true
+	g.SetManagerFunc(layout)
+	err = initKeyBindings(g)
+	if err != nil {
+		panic(err)
+	}
+	return g
+}
+
 // Display line in the corresponding view
 func displayLine(g *gocui.Gui, viewName string, line string) {
 	g.Update(
