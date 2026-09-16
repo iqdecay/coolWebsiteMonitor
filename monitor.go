@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptrace"
@@ -48,18 +50,37 @@ func getPerformance(url string) UrlLastResponse {
 		},
 	}
 	req, _ := http.NewRequest("HEAD", url, nil)
-	// A request taking more than one minute is invalid
+	// A website taking more than 1m to answer is considered down
 	ctx, cancel := context.WithTimeout(req.Context(), time.Minute)
 	defer cancel()
 	req = req.WithContext(httptrace.WithClientTrace(ctx, trace))
 	start = time.Now()
 	r, err := http.DefaultTransport.RoundTrip(req)
 	if err != nil {
-		log.Fatalf("While fetching %s: %v", url, err)
+		log.Printf("While fetching %s: %v", url, err)
+		var responseType UrlResponseType
+		if errors.Is(err, context.DeadlineExceeded) {
+			responseType = DeadlineExceeded
+		} else {
+			// treat non-deadline errors as network failures
+			responseType = NetworkFailure
+		}
+		return UrlLastResponse{
+			responseCode: -1,
+			responseTime: time.Minute,
+			responseType: responseType,
+		}
 	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Printf("Error closing request body while fetching %s: %v", url, err)
+		}
+	}(r.Body)
 	return UrlLastResponse{
 		responseTime: ttfb,
 		responseCode: r.StatusCode,
+		responseType: ResponseReceived,
 	}
 }
 

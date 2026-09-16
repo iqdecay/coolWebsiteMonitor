@@ -6,9 +6,18 @@ import (
 	"time"
 )
 
+type UrlResponseType int
+
+const (
+	NetworkFailure UrlResponseType = iota
+	DeadlineExceeded
+	ResponseReceived
+)
+
 type UrlLastResponse struct {
 	responseTime time.Duration
 	responseCode int // HTTP response code
+	responseType UrlResponseType
 }
 
 // Holds the statistics for a given amount of time (e.g. last 10 min)
@@ -84,7 +93,7 @@ func (w *WebsiteStatistics) update(r UrlLastResponse) {
 		w.responseTimeSum -= discard.responseTime
 		w.lastResponses = w.lastResponses[1:]
 		w.statusCodeCount[discard.responseCode]--
-		if discard.responseCode != http.StatusServiceUnavailable {
+		if discard.responseType == ResponseReceived && discard.responseCode < http.StatusInternalServerError {
 			w.lastAvailabilities--
 		}
 		// Do O(n) search for the new max, can be avoided but
@@ -104,7 +113,7 @@ func (w *WebsiteStatistics) update(r UrlLastResponse) {
 	}
 	w.lastResponses = append(w.lastResponses, r)
 	w.statusCodeCount[r.responseCode]++
-	if r.responseCode != http.StatusServiceUnavailable {
+	if r.responseType == ResponseReceived && r.responseCode < http.StatusInternalServerError {
 		w.lastAvailabilities++
 	}
 	w.responseTimeSum += r.responseTime
