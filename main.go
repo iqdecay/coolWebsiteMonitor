@@ -9,7 +9,7 @@ import (
 	"github.com/jroimartin/gocui"
 )
 
-const DATE_FORMAT = "2006-01-02 15:04:05"
+const DateFormat = "2006-01-02 15:04:05"
 
 // Format duration to avoid unnecessary precision
 func formatDuration(duration time.Duration) string {
@@ -90,10 +90,10 @@ func main() {
 			var line string
 			if a.isDown {
 				line = fmt.Sprintf("Website %s is down. availability=%.0f%%, time=%v",
-					a.url, a.availability, a.since.Format(DATE_FORMAT))
+					a.url, a.availability, a.since.Format(DateFormat))
 			} else {
 				line = fmt.Sprintf("Website %s recovered. availability=%.0f%%, time=%v",
-					a.url, a.availability, a.since.Format(DATE_FORMAT))
+					a.url, a.availability, a.since.Format(DateFormat))
 			}
 			displayLine(g, "alerts", line)
 		}
