@@ -31,9 +31,7 @@ func main() {
 		monitors[domain] = m
 		domains = append(domains, domain)
 		// The "done" channel here is not useful since shared, see README
-		go func() {
-			m.monitor(done)
-		}()
+		go m.monitor(done)
 	}
 
 	// Init ui
