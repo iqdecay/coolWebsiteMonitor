@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/jroimartin/gocui"
 )
 
@@ -66,7 +68,7 @@ func update(g *gocui.Gui) error {
 func displayLine(g *gocui.Gui, viewName string, line string) {
 	g.Update(
 		func(g *gocui.Gui) error {
-			if line[len(line)-1:] != "\n" {
+			if !strings.HasSuffix(line, "\n") {
 				line = line + "\n"
 			}
 			byteMessage := []byte(line)
